@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex h-screen bg-gray-50 overflow-hidden" x-data="{ sidebarOpen: false, profileDropdown: false, notifDropdown: false, darkMode: false }" :class="{ 'dark': darkMode }">
+    
+    <!-- Sidebar -->
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-64 bg-poly-900 text-white transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto flex flex-col shadow-xl">
+        <div class="flex items-center justify-between px-6 py-4 bg-poly-950">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-graduation-cap text-2xl text-yellow-400"></i>
+                <span class="font-bold text-lg tracking-wider">NNPSMS</span>
+            </div>
+            <button @click="sidebarOpen = false" class="lg:hidden text-gray-300 hover:text-white">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+            <a href="#" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg bg-poly-800 text-white font-medium text-sm">
+                <i class="fas fa-tachometer-alt w-5 text-center"></i><span>Dashboard</span>
+            </a>
+            {% if current_user.role in ['Super Administrator', 'Registrar', 'Principal', 'Deputy Principal'] %}
+            <a href="{{ url_for('admin.list_departments') }}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition text-sm">
+                <i class="fas fa-users w-5 text-center"></i><span>Students</span>
+            </a>
+            <a href="{{ url_for('admin.list_departments') }}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition text-sm">
+                <i class="fas fa-chalkboard-teacher w-5 text-center"></i><span>Lecturers</span>
+            </a>
+            <a href="{{ url_for('admin.list_departments') }}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition text-sm">
+                <i class="fas fa-building w-5 text-center"></i><span>Departments</span>
+            </a>
+            <a href="{{ url_for('admin.list_courses') }}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition text-sm">
+                <i class="fas fa-book-open w-5 text-center"></i><span>Courses</span>
+            </a>
+            <a href="{{ url_for('admin.list_units') }}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition text-sm">
+                <i class="fas fa-cubes w-5 text-center"></i><span>Units</span>
+            </a>
+            {% endif %}
+            <a href="#" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition text-sm">
+                <i class="fas fa-clipboard-check w-5 text-center"></i><span>Attendance</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition text-sm">
+                <i class="fas fa-file-alt w-5 text-center"></i><span>Examinations</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition text-sm">
+                <i class="fas fa-wallet w-5 text-center"></i><span>Fees Management</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition text-sm">
+                <i class="fas fa-book w-5 text-center"></i><span>Library</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition text-sm">
+                <i class="fas fa-chart-bar w-5 text-center"></i><span>Reports</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition text-sm">
+                <i class="fas fa-cog w-5 text-center"></i><span>Settings</span>
+            </a>
+        </div>
+        <div class="p-4 bg-poly-950">
+            <a href="{{ url_for('auth.logout') }}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-red-400 hover:bg-red-900/30 transition text-sm font-medium">
+                <i class="fas fa-sign-out-alt w-5 text-center"></i><span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content wrapper -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        
+        <!-- Top Navigation -->
+        <header class="bg-white shadow-sm z-10 flex items-center justify-between h-16 px-6">
+            <div class="flex items-center space-x-4">
+                <button @click="sidebarOpen = true" class="text-gray-500 lg:hidden hover:text-gray-700 focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <div class="relative hidden md:block">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3"><i class="fas fa-search text-gray-400"></i></span>
+                    <input type="text" placeholder="Search records, students, modules..." class="w-72 pl-10 pr-4 py-2 text-sm bg-gray-100 border-transparent rounded-lg focus:bg-white focus:border-poly-500 focus:ring-1 focus:ring-poly-500">
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <!-- Dark mode toggle -->
+                <button @click="darkMode = !darkMode" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                    <i :class="darkMode ? 'fas fa-sun text-yellow-400' : 'fas fa-moon text-gray-600'" class="text-lg"></i>
+                </button>
+
+                <!-- Notifications Dropdown -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" class="relative text-gray-500 hover:text-gray-700 focus:outline-none">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 border border-gray-100 z-50 text-sm">
+                        <div class="px-4 py-2 font-semibold text-gray-700 border-b flex justify-between items-center">
+                            <span>Notifications</span>
+                            <span class="text-xs bg-poly-100 text-poly-800 px-2 py-0.5 rounded-full">4 New</span>
+                        </div>
+                        <a href="#" class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-100">
+                            <p class="font-medium text-gray-900">Fee Reminder</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Term II fee balances are due by Friday.</p>
+                        </a>
+                        <a href="#" class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-100">
+                            <p class="font-medium text-gray-900">System Alert</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Scheduled network maintenance tonight.</p>
+                        </a>
+                        <a href="#" class="block px-4 py-3 hover:bg-gray-50">
+                            <p class="font-medium text-gray-900">New Examination Uploaded</p>
+                            <p class="text-xs text-gray-500 mt-0.5">CIT 2201 past papers are now live.</p>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Profile Menu -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" class="flex items-center space-x-3 focus:outline-none">
+                        <div class="h-9 w-9 rounded-full bg-poly-800 text-white flex items-center justify-center font-bold">
+                            {{ current_user.username[0]|upper }}
+                        </div>
+                        <div class="text-left hidden sm:block">
+                            <span class="block text-sm font-semibold text-gray-800">{{ current_user.username }}</span>
+                            <span class="block text-xs text-poly-700 font-medium">{{ current_user.role }}</span>
+                        </div>
+                    </button>
+                    <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 border border-gray-100 z-50 text-sm">
+                        <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Your Profile</a>
+                        <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</a>
+                        <div class="border-t border-gray-100 my-1"></div>
+                        <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-red-600 hover:bg-gray-100">Sign out</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard View Scrollable Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6 space-y-6">
+            
+            <!-- Welcome Banner & Quick Actions -->
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between bg-white p-6 rounded-xl shadow-sm border border-gray-100 gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Nyeri National Polytechnic Portal</h1>
+                    <p class="text-sm text-gray-500 mt-1">Role Active: <span class="font-semibold text-poly-800">{{ current_user.role }}</span> — Welcome back, {{ current_user.username }}</p>
+                </div>
+                {% if current_user.role in ['Super Administrator', 'Registrar'] %}
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ url_for('admin.add_department') }}" class="px-4 py-2 bg-poly-800 text-white text-xs font-semibold rounded-lg hover:bg-poly-900 transition shadow"><i class="fas fa-user-plus mr-1.5"></i> Register Student</a>
+                    <a href="{{ url_for('admin.add_department') }}" class="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition shadow"><i class="fas fa-chalkboard-teacher mr-1.5"></i> Add Lecturer</a>
+                    <a href="{{ url_for('admin.add_course') }}" class="px-4 py-2 bg-yellow-600 text-white text-xs font-semibold rounded-lg hover:bg-yellow-700 transition shadow"><i class="fas fa-book-medical mr-1.5"></i> Add Course</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Stats Grid Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Students</p>
+                        <p class="text-2xl font-extrabold text-gray-900 mt-1">{{ metrics.total_students }}</p>
+                    </div>
+                    <div class="p-3 bg-poly-100 text-poly-800 rounded-lg text-xl"><i class="fas fa-user-graduate"></i></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Lecturers</p>
+                        <p class="text-2xl font-extrabold text-gray-900 mt-1">{{ metrics.total_lecturers }}</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 text-blue-800 rounded-lg text-xl"><i class="fas fa-chalkboard-teacher"></i></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Departments / Courses</p>
+                        <p class="text-2xl font-extrabold text-gray-900 mt-1">{{ metrics.total_departments }} / {{ metrics.total_courses }}</p>
+                    </div>
+                    <div class="p-3 bg-green-100 text-green-800 rounded-lg text-xl"><i class="fas fa-sitemap"></i></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Fee Collected</p>
+                        <p class="text-xl font-extrabold text-gray-900 mt-1">{{ metrics.fee_collected }}</p>
+                    </div>
+                    <div class="p-3 bg-yellow-100 text-yellow-800 rounded-lg text-xl"><i class="fas fa-wallet"></i></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-gray-500">Outstanding Fees</p>
+                        <p class="text-lg font-bold text-red-600 mt-0.5">{{ metrics.outstanding_fees }}</p>
+                    </div>
+                    <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-gray-500">Attendance Today</p>
+                        <p class="text-lg font-bold text-gray-900 mt-0.5">{{ metrics.attendance_today }}</p>
+                    </div>
+                    <i class="fas fa-user-check text-green-600 text-xl"></i>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-gray-500">Library Books</p>
+                        <p class="text-lg font-bold text-gray-900 mt-0.5">{{ metrics.library_books }}</p>
+                    </div>
+                    <i class="fas fa-book text-blue-600 text-xl"></i>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-gray-500">Active Users</p>
+                        <p class="text-lg font-bold text-gray-900 mt-0.5">{{ metrics.active_users }}</p>
+                    </div>
+                    <i class="fas fa-users text-purple-600 text-xl"></i>
+                </div>
+            </div>
+
+            <!-- Charts Section (Chart.js) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-base font-bold text-gray-800 mb-4">Student Registration Trend</h3>
+                    <div class="h-72"><canvas id="regTrendChart"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-base font-bold text-gray-800 mb-4">Fee Collection Trend (Ksh)</h3>
+                    <div class="h-72"><canvas id="feeCollectionChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-base font-bold text-gray-800 mb-4">Attendance Percentage</h3>
+                    <div class="h-64 flex justify-center"><canvas id="attendanceChart"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-base font-bold text-gray-800 mb-4">Examination Performance</h3>
+                    <div class="h-64"><canvas id="examPerfChart"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-base font-bold text-gray-800 mb-4">Department Statistics</h3>
+                    <div class="h-64 flex justify-center"><canvas id="deptStatsChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Recent Activity & Notifications Panel Bottom Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-base font-bold text-gray-800 mb-4">Recent Activity Logs</h3>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex items-start space-x-3 pb-3 border-b border-gray-100">
+                            <div class="p-2 bg-green-100 text-green-700 rounded-lg"><i class="fas fa-user-plus"></i></div>
+                            <div>
+                                <p class="font-medium text-gray-900">New Student Registered</p>
+                                <p class="text-xs text-gray-500">Brian Kiprono registered for Diploma in ICT — 10 mins ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3 pb-3 border-b border-gray-100">
+                            <div class="p-2 bg-blue-100 text-blue-700 rounded-lg"><i class="fas fa-wallet"></i></div>
+                            <div>
+                                <p class="font-medium text-gray-900">Fees Paid</p>
+                                <p class="text-xs text-gray-500">Ksh 24,000 processed via M-Pesa for NNP/2026/0481 — 25 mins ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3 pb-3 border-b border-gray-100">
+                            <div class="p-2 bg-yellow-100 text-yellow-700 rounded-lg"><i class="fas fa-chalkboard-teacher"></i></div>
+                            <div>
+                                <p class="font-medium text-gray-900">Lecturer Added</p>
+                                <p class="text-xs text-gray-500">Dr. Sarah Mwangi assigned to Computing Dept — 1 hr ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="p-2 bg-purple-100 text-purple-700 rounded-lg"><i class="fas fa-file-upload"></i></div>
+                            <div>
+                                <p class="font-medium text-gray-900">Examination Uploaded</p>
+                                <p class="text-xs text-gray-500">CIT 2202 End of Term Exam uploaded by Dept Head — 3 hrs ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-base font-bold text-gray-800 mb-4">System Notifications & Alerts</h3>
+                    <div class="space-y-4 text-sm">
+                        <div class="p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-yellow-800">Fee Reminder Notice</span>
+                                <span class="text-xs text-yellow-600">Today</span>
+                            </div>
+                            <p class="text-xs text-yellow-700 mt-1">All students are reminded to clear at least 60% of fees before sitting final examinations.</p>
+                        </div>
+                        <div class="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-blue-800">Examination Schedule</span>
+                                <span class="text-xs text-blue-600">2 days ago</span>
+                            </div>
+                            <p class="text-xs text-blue-700 mt-1">Series 3 TVET examinations begin on the 15th of next month across all departments.</p>
+                        </div>
+                        <div class="p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
+                            <div class="flex justify-between">
+                                <span class="font-semibold text-green-800">New Library Resources</span>
+                                <span class="text-xs text-green-600">3 days ago</span>
+                            </div>
+                            <p class="text-xs text-green-700 mt-1">Over 500 new engineering and networking manuals have been checked into the main library.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Chart.js CDN inclusion -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. Student Registration Trend
+        new Chart(document.getElementById('regTrendChart'), {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'New Registrations',
+                    data: [120, 250, 430, 610, 850, 1245],
+                    borderColor: '#1e3a8a',
+                    backgroundColor: 'rgba(30, 58, 138, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 2. Fee Collection Trend
+        new Chart(document.getElementById('feeCollectionChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Term I', 'Term II', 'Term III'],
+                datasets: [{
+                    label: 'Collected (Millions Ksh)',
+                    data: [35, 42.5, 38],
+                    backgroundColor: '#eab308'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 3. Attendance Percentage
+        new Chart(document.getElementById('attendanceChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Present', 'Absent', 'Excused'],
+                datasets: [{
+                    data: [94.2, 4.1, 1.7],
+                    backgroundColor: ['#22c55e', '#ef4444', '#f59e0b']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 4. Examination Performance
+        new Chart(document.getElementById('examPerfChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Distinction', 'Credit', 'Pass', 'Refer'],
+                datasets: [{
+                    label: 'Students Count',
+                    data: [310, 580, 290, 65],
+                    backgroundColor: '#3b82f6'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 5. Department Statistics
+        new Chart(document.getElementById('deptStatsChart'), {
+            type: 'pie',
+            data: {
+                labels: ['Computing', 'Business', 'Engineering', 'Agriculture'],
+                datasets: [{
+                    data: [450, 380, 310, 105],
+                    backgroundColor: ['#1e3a8a', '#eab308', '#3b82f6', '#22c55e']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    });
+</script>
+{% endblock %}
