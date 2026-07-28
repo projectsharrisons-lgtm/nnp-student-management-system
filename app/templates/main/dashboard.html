@@ -1,63 +1,60 @@
-{% extends "layouts/dashboard_layout.html" %}
-{% block dashboard_content %}
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <!-- Stat Card 1 -->
-    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        <div class="flex items-center">
-            <div class="p-3 rounded-full bg-blue-100 text-blue-600">
-                <i class="fas fa-user-graduate text-xl"></i>
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white shadow rounded-lg p-6 border border-gray-200 mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Welcome, {{ current_user.username }}!</h1>
+                <p class="text-sm text-gray-500 mt-1">Role Designation: <span class="font-semibold text-poly-800">{{ current_user.role }}</span></p>
             </div>
-            <div class="ml-4">
-                <p class="mb-2 text-sm font-medium text-gray-600">Total Students</p>
-                <p class="text-lg font-semibold text-gray-700">Loading...</p>
-            </div>
-        </div>
-    </div>
-    <!-- Stat Card 2 -->
-    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        <div class="flex items-center">
-            <div class="p-3 rounded-full bg-green-100 text-green-600">
-                <i class="fas fa-chalkboard-teacher text-xl"></i>
-            </div>
-            <div class="ml-4">
-                <p class="mb-2 text-sm font-medium text-gray-600">Total Lecturers</p>
-                <p class="text-lg font-semibold text-gray-700">Loading...</p>
+            <div class="text-right">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <i class="fas fa-check-circle mr-1.5"></i> Verified NNP Account
+                </span>
             </div>
         </div>
     </div>
-    <!-- Stat Card 3 -->
-    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        <div class="flex items-center">
-            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                <i class="fas fa-building text-xl"></i>
-            </div>
-            <div class="ml-4">
-                <p class="mb-2 text-sm font-medium text-gray-600">Departments</p>
-                <p class="text-lg font-semibold text-gray-700">Loading...</p>
-            </div>
-        </div>
-    </div>
-    <!-- Stat Card 4 -->
-    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        <div class="flex items-center">
-            <div class="p-3 rounded-full bg-purple-100 text-purple-600">
-                <i class="fas fa-book text-xl"></i>
-            </div>
-            <div class="ml-4">
-                <p class="mb-2 text-sm font-medium text-gray-600">Active Courses</p>
-                <p class="text-lg font-semibold text-gray-700">Loading...</p>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Chart Placeholder area -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-80 flex items-center justify-center">
-        <p class="text-gray-400 font-medium">Activity Chart rendering in Phase 2</p>
+    {% if current_user.role == 'Super Administrator' %}
+    <div class="bg-poly-800 rounded-lg shadow-xl p-6 text-white mb-8 flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-bold"><i class="fas fa-cogs mr-2"></i> Institutional Administration Module</h2>
+            <p class="text-poly-100 text-sm mt-1">Manage polytechnic departments, course listings, structures, and system modules.</p>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="bg-white text-poly-900 px-5 py-2.5 rounded-md font-semibold text-sm hover:bg-gray-100 transition shadow">
+            Open Admin Panel <i class="fas fa-arrow-right ml-1.5"></i>
+        </a>
     </div>
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-80 flex items-center justify-center">
-        <p class="text-gray-400 font-medium">System Notifications rendering in Phase 2</p>
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5">
+            <div class="flex items-center">
+                <div class="p-3 rounded-md bg-poly-100 text-poly-800 text-xl"><i class="fas fa-user-shield"></i></div>
+                <div class="ml-5">
+                    <p class="text-sm font-medium text-gray-500">System Security</p>
+                    <p class="text-lg font-semibold text-gray-900">Active & Protected</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5">
+            <div class="flex items-center">
+                <div class="p-3 rounded-md bg-blue-100 text-blue-800 text-xl"><i class="fas fa-book-reader"></i></div>
+                <div class="ml-5">
+                    <p class="text-sm font-medium text-gray-500">Institution</p>
+                    <p class="text-lg font-semibold text-gray-900">Nyeri National Poly</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5">
+            <div class="flex items-center">
+                <div class="p-3 rounded-md bg-yellow-100 text-yellow-800 text-xl"><i class="fas fa-clock"></i></div>
+                <div class="ml-5">
+                    <p class="text-sm font-medium text-gray-500">Server Session</p>
+                    <p class="text-lg font-semibold text-gray-900">Encrypted JWT/Token</p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
