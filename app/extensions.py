@@ -23,7 +23,7 @@ login_manager.login_view = "auth.login"
 login_manager.login_message_category = "warning"
 login_manager.session_protection = "strong"
 
-# CSRF Protection
+# Cross-Site Request Forgery Protection
 csrf = CSRFProtect()
 
 # Mail
