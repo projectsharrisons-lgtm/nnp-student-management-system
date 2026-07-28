@@ -3,7 +3,7 @@ from flask import current_app
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import URLSafeTimedSerializer as Serializer
-from app.extensions import db
+from app.extensions import db, login_manager
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -41,3 +41,8 @@ class User(db.Model, UserMixin):
 
     def __repr__(self):
         return f'<User {self.username} - {self.role}>'
+
+# CRITICAL FIX: Flask-Login requires this to load the user from the session
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
