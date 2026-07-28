@@ -11,7 +11,7 @@ from flask_wtf.csrf import CSRFProtect
 # ==========================================
 # CORE EXTENSIONS
 # ==========================================
-
+mail = Mail()
 # 1. Database ORM
 db = SQLAlchemy()
 
@@ -25,16 +25,16 @@ login_manager.login_view = 'auth.login'  # Blueprint.route to redirect unauthori
 login_manager.login_message_category = 'warning'
 login_manager.session_protection = 'strong'
 
-# 4. Cross-Site Request Forgery Protection
+ Cross-Site Request Forgery Protection
 csrf = CSRFProtect()
 
 # ==========================================
 # OPTIONAL EXTENSIONS (Uncomment if used)
 # ==========================================
 
-# from flask_mail import Mail
-# mail = Mail()
+from flask_mail import Mail
+mail = Mail()
 
-# from flask_limiter import Limiter
-# from flask_limiter.util import get_remote_address
-# limiter = Limiter(key_func=get_remote_address)
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+limiter = Limiter(key_func=get_remote_address)
