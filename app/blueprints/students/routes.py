@@ -11,9 +11,10 @@ from app.models.student import Student
 from app.models.academic import Department, Course
 from app.blueprints.students.forms import StudentForm
 from datetime import datetime
+import io
 import os
 import uuid
-
+import csv
 students_bp = Blueprint('students', __name__, url_prefix='/students')
 
 def generate_admission_number():
@@ -238,3 +239,215 @@ def delete_student(id):
         db.session.rollback()
         flash('Cannot delete student due to active system relations.', 'error')
     return redirect(url_for('students.list_students'))
+@students_bp.route('/export/csv')
+@login_required
+@admin_required
+def export_students_csv():
+    search = request.args.get('search', '', type=str).strip()
+    status_filter = request.args.get('status', '', type=str).strip()
+    
+    query = Student.query.filter_by(is_archived=False)
+    if search:
+        query = query.filter(
+            (Student.first_name.ilike(f'%{search}%')) |
+            (Student.last_name.ilike(f'%{search}%')) |
+            (Student.admission_number.ilike(f'%{search}%'))
+        )
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+        
+    students = query.order_by(Student.admission_number).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        'Admission Number', 'First Name', 'Middle Name', 'Last Name',
+        'Email', 'Phone', 'Gender', 'DOB', 'County',
+        'Department', 'Course', 'Academic Year', 'Semester/Module', 'Status'
+    ])
+    
+    for s in students:
+        writer.writerow([
+            s.admission_number, s.first_name, s.middle_name or '', s.last_name,
+            s.email, s.phone_number, s.gender, s.date_of_birth.strftime('%Y-%m-%d') if s.date_of_birth else '',
+            s.county, s.department.code if s.department else '', s.course.code if s.course else '',
+            s.academic_year, s.semester_module, s.status
+        ])
+        
+    current_app.logger.info(f"AUDIT: User '{current_user.username}' exported {len(students)} student records to CSV.")
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment;filename=NNP_Students_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"}
+    )
+
+
+@students_bp.route('/import', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def import_students():
+    summary = None
+    if request.method == 'POST':
+        file = request.files.get('csv_file')
+        if not file or not file.filename.endswith('.csv'):
+            flash('Invalid file. Please upload a valid .csv document.', 'error')
+            return render_template('students/import.html', summary=summary)
+            
+        stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
+        reader = csv.DictReader(stream)
+        
+        success, skipped, failed = 0, 0, 0
+        errors = []
+        
+        for idx, row in enumerate(reader, start=2): # Row 2 is first data row
+            email = row.get('email', '').strip()
+            first_name = row.get('first_name', '').strip()
+            last_name = row.get('last_name', '').strip()
+            dept_code = row.get('department_code', '').strip()
+            course_code = row.get('course_code', '').strip()
+            
+            if not email or not first_name or not last_name:
+                failed += 1
+                errors.append({'row': idx, 'reason': 'Missing required fields (email, first_name, last_name).'})
+                continue
+                
+            if Student.query.filter_by(email=email).first():
+                skipped += 1
+                errors.append({'row': idx, 'reason': f'Email duplicate skipped ({email}).'})
+                continue
+                
+            department = Department.query.filter_by(code=dept_code).first()
+            course = Course.query.filter_by(code=course_code).first()
+            
+            if not department or not course:
+                failed += 1
+                errors.append({'row': idx, 'reason': f'Invalid Department Code ({dept_code}) or Course Code ({course_code}).'})
+                continue
+                
+            try:
+                dob = datetime.strptime(row.get('date_of_birth', '2000-01-01').strip(), '%Y-%m-%d').date()
+                adm_no = generate_admission_number() # Uses your existing generate_admission_number helper
+                
+                student = Student(
+                    admission_number=adm_no,
+                    first_name=first_name,
+                    middle_name=row.get('middle_name', '').strip(),
+                    last_name=last_name,
+                    email=email,
+                    phone_number=row.get('phone_number', '0700000000').strip(),
+                    gender=row.get('gender', 'Other').strip(),
+                    date_of_birth=dob,
+                    national_id=row.get('national_id', '').strip() or None,
+                    county=row.get('county', 'Nyeri').strip(),
+                    guardian_name=row.get('guardian_name', 'N/A').strip(),
+                    guardian_phone=row.get('guardian_phone', '0700000000').strip(),
+                    emergency_contact=row.get('emergency_contact', '0700000000').strip(),
+                    department_id=department.id,
+                    course_id=course.id,
+                    academic_year=row.get('academic_year', '2025/2026').strip(),
+                    semester_module=row.get('semester_module', 'Module I').strip(),
+                    status='Active'
+                )
+                db.session.add(student)
+                db.session.commit()
+                success += 1
+            except Exception as e:
+                db.session.rollback()
+                failed += 1
+                errors.append({'row': idx, 'reason': f'Database error: {str(e)}'})
+                
+        summary = {'success': success, 'skipped': skipped, 'failed': failed, 'errors': errors}
+        current_app.logger.info(f"AUDIT: User '{current_user.username}' executed CSV import. Success: {success}, Skipped: {skipped}, Failed: {failed}.")
+        flash(f'Import finished: {success} added, {skipped} skipped, {failed} failed.', 'info')
+        
+    return render_template('students/import.html', summary=summary)
+
+
+@students_bp.route('/import/sample-csv')
+@login_required
+@admin_required
+def download_sample_csv():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        'first_name', 'middle_name', 'last_name', 'email', 'phone_number',
+        'gender', 'date_of_birth', 'national_id', 'county', 'guardian_name',
+        'guardian_phone', 'emergency_contact', 'department_code', 'course_code',
+        'academic_year', 'semester_module'
+    ])
+    writer.writerow([
+        'John', 'Mwangi', 'Kamau', 'john.kamau@example.com', '0712345678',
+        'Male', '2002-05-14', '38492019', 'Nyeri', 'Peter Kamau',
+        '0722334455', '0722334455', 'COMP', 'CS101', '2025/2026', 'Module I'
+    ])
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=NNP_Student_Import_Sample.csv"}
+    )
+
+
+# ==============================================================================
+# PHASE 3C: PDF REPORT GENERATION ROUTES
+# ==============================================================================
+
+@students_bp.route('/pdf/profile/<int:id>')
+@login_required
+@admin_required
+def pdf_student_profile(id):
+    student = Student.query.get_or_404(id)
+    pdf_buffer = generate_student_profile_pdf(student)
+    current_app.logger.info(f"AUDIT: User '{current_user.username}' generated PDF Profile for {student.admission_number}.")
+    return send_file(
+        pdf_buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f"Profile_{student.admission_number.replace('/', '_')}.pdf"
+    )
+
+
+@students_bp.route('/pdf/admission-letter/<int:id>')
+@login_required
+@admin_required
+def pdf_admission_letter(id):
+    student = Student.query.get_or_404(id)
+    pdf_buffer = generate_admission_letter_pdf(student)
+    current_app.logger.info(f"AUDIT: User '{current_user.username}' generated Admission Letter PDF for {student.admission_number}.")
+    return send_file(
+        pdf_buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f"Admission_Letter_{student.admission_number.replace('/', '_')}.pdf"
+    )
+
+
+@students_bp.route('/pdf/list')
+@login_required
+@admin_required
+def pdf_student_list():
+    search = request.args.get('search', '', type=str).strip()
+    status_filter = request.args.get('status', '', type=str).strip()
+    
+    query = Student.query.filter_by(is_archived=False)
+    if search:
+        query = query.filter(
+            (Student.first_name.ilike(f'%{search}%')) |
+            (Student.last_name.ilike(f'%{search}%')) |
+            (Student.admission_number.ilike(f'%{search}%'))
+        )
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+        
+    students = query.order_by(Student.admission_number).all()
+    filter_summary = f"Search='{search}', Status='{status_filter}'" if (search or status_filter) else "All Enrolled Students"
+    
+    pdf_buffer = generate_student_list_pdf(students, filter_summary=filter_summary)
+    current_app.logger.info(f"AUDIT: User '{current_user.username}' generated Student Directory List PDF.")
+    
+    return send_file(
+        pdf_buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f"NNP_Student_List_{datetime.now().strftime('%Y%m%d')}.pdf"
+    )
