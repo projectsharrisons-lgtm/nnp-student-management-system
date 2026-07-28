@@ -1,5 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="space-x-2">
+    <a href="{{ url_for('students.pdf_student_profile', id=student.id) }}" class="px-3 py-2 bg-red-700 text-white text-xs font-semibold rounded-lg hover:bg-red-800 transition">
+        <i class="fas fa-file-pdf mr-1"></i> Profile PDF
+    </a>
+    <a href="{{ url_for('students.pdf_admission_letter', id=student.id) }}" class="px-3 py-2 bg-green-700 text-white text-xs font-semibold rounded-lg hover:bg-green-800 transition">
+        <i class="fas fa-envelope-open-text mr-1"></i> Admission Letter PDF
+    </a>
+    <a href="{{ url_for('students.edit_student', id=student.id) }}" class="px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition">Edit Record</a>
+</div>
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between mb-6">
         <a href="{{ url_for('students.list_students') }}" class="text-sm font-medium text-poly-800 hover:underline">
