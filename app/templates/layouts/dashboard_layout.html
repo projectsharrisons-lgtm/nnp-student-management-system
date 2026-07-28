@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - NNPSMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: { poly: { 50: '#eef4ff', 100: '#e0ebff', 500: '#3b82f6', 600: '#2563eb', 800: '#003366', 900: '#001a33' }}}}}
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans h-screen flex overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="bg-poly-900 text-white w-64 flex-shrink-0 hidden md:flex flex-col transition-all duration-300 z-20" id="sidebar">
+        <div class="h-16 flex items-center justify-center border-b border-poly-800 px-4">
+            <i class="fas fa-graduation-cap text-2xl text-poly-100 mr-2"></i>
+            <span class="text-xl font-bold">NNPSMS</span>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-2 px-3">
+                <li>
+                    <a href="{{ url_for('main.dashboard') }}" class="flex items-center px-4 py-3 bg-poly-800 rounded-lg text-white hover:bg-poly-700 transition">
+                        <i class="fas fa-tachometer-alt w-6"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                {% if current_user.role in ['Super Administrator', 'Registrar', 'Principal'] %}
+                <li>
+                    <a href="#" class="flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition">
+                        <i class="fas fa-users w-6"></i>
+                        <span>Student Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition">
+                        <i class="fas fa-chalkboard-teacher w-6"></i>
+                        <span>Lecturers</span>
+                    </a>
+                </li>
+                {% endif %}
+                <li>
+                    <a href="#" class="flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition">
+                        <i class="fas fa-calendar-alt w-6"></i>
+                        <span>Timetable</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-poly-800 hover:text-white transition">
+                        <i class="fas fa-book-reader w-6"></i>
+                        <span>Library</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-poly-800">
+            <a href="{{ url_for('auth.logout') }}" class="flex items-center text-red-400 hover:text-red-300 transition">
+                <i class="fas fa-sign-out-alt w-6"></i>
+                <span>Sign Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Navbar -->
+        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10">
+            <div class="flex items-center">
+                <button id="mobile-menu-btn" class="md:hidden text-gray-600 focus:outline-none hover:text-poly-600">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <h2 class="ml-4 text-xl font-semibold text-gray-800 hidden sm:block">Welcome, {{ current_user.username }}</h2>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="text-sm font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full border">
+                    {{ current_user.role }}
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Content -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-4 px-4 py-3 rounded shadow-sm text-white flex justify-between
+                            {% if category == 'success' %} bg-green-500 
+                            {% elif category == 'error' %} bg-red-500 
+                            {% else %} bg-blue-500 {% endif %}">
+                            <span>{{ message }}</span>
+                            <button onclick="this.parentElement.style.display='none'">&times;</button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            {% block dashboard_content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Mobile Sidebar overlay script -->
+    <script>
+        const btn = document.getElementById('mobile-menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        btn.addEventListener('click', () => {
+            sidebar.classList.toggle('hidden');
+            sidebar.classList.toggle('absolute');
+            sidebar.classList.toggle('h-full');
+        });
+    </script>
+</body>
+</html>
