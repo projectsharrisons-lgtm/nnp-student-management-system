@@ -76,6 +76,17 @@ class StudentProfile(db.Model):
     )
 
     user = db.relationship(
+    class LecturerProfile(db.Model):
+    __tablename__ = "lecturer_profiles"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    staff_number = db.Column(db.String(50), unique=True, nullable=False)
+    department_id = db.Column(db.Integer, db.ForeignKey("departments.id"))
+    specialization = db.Column(db.String(150))
+
+    def __repr__(self):
+        return f"<LecturerProfile {self.staff_number}>"    
         "User",
         backref=db.backref("lecturer_profile", uselist=False)
     )
