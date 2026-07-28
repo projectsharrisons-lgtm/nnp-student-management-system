@@ -2,6 +2,7 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from flask import Flask, render_template
+from werkzeug.exceptions import HTTPException
 from config import config_dict
 from app.extensions import db, migrate, login_manager, csrf, mail, limiter
 
@@ -12,7 +13,6 @@ def create_app(config_name=None):
     app = Flask(__name__)
     app.config.from_object(config_dict[config_name])
 
-    # Initialize Extensions
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
@@ -20,17 +20,15 @@ def create_app(config_name=None):
     mail.init_app(app)
     limiter.init_app(app)
 
-    # Register Blueprints
     from app.blueprints.main.routes import main_bp
     from app.blueprints.auth.routes import auth_bp
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
 
-    # Configure Audit Logging
-    if not os.path.exists('logs'):
-        os.mkdir('logs')
+    # FIX: Safe directory creation for logs
+    os.makedirs('logs', exist_ok=True)
     
-    audit_handler = RotatingFileHandler('logs/nnpsms_audit.log', maxBytes=10485760, backupCount=10) # 10MB per file
+    audit_handler = RotatingFileHandler('logs/nnpsms_audit.log', maxBytes=10485760, backupCount=10)
     audit_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - AUDIT: %(message)s [in %(pathname)s:%(lineno)d]'))
     audit_handler.setLevel(logging.INFO)
     
@@ -40,7 +38,6 @@ def create_app(config_name=None):
     if not app.debug and not app.testing:
         app.logger.info('NNPSMS System Startup')
 
-    # Global Error Handlers & Production Safeguards
     @app.errorhandler(403)
     def forbidden_error(error):
         return render_template('errors/403.html'), 403
@@ -56,9 +53,12 @@ def create_app(config_name=None):
 
     @app.errorhandler(Exception)
     def handle_unhandled_exception(e):
-        """Catch-all for unexpected production errors to ensure graceful failure and DB rollback."""
+        # FIX: Do not intercept normal routing errors (404, 405)
+        if isinstance(e, HTTPException):
+            return e
+            
         db.session.rollback()
-        app.logger.error(f"Unhandled Exception: {str(e)}")
+        app.logger.error(f"Unhandled Exception: {str(e)}", exc_info=True)
         return render_template('errors/500.html'), 500
 
     return app
