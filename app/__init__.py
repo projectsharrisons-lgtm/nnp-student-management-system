@@ -23,11 +23,24 @@ def create_app(config_name=None):
     # Register Blueprints
     from app.blueprints.main.routes import main_bp
     from app.blueprints.auth.routes import auth_bp
-
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
 
-    # Error Handlers
+    # Configure Audit Logging
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+    
+    audit_handler = RotatingFileHandler('logs/nnpsms_audit.log', maxBytes=10485760, backupCount=10) # 10MB per file
+    audit_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - AUDIT: %(message)s [in %(pathname)s:%(lineno)d]'))
+    audit_handler.setLevel(logging.INFO)
+    
+    app.logger.addHandler(audit_handler)
+    app.logger.setLevel(logging.INFO)
+    
+    if not app.debug and not app.testing:
+        app.logger.info('NNPSMS System Startup')
+
+    # Global Error Handlers & Production Safeguards
     @app.errorhandler(403)
     def forbidden_error(error):
         return render_template('errors/403.html'), 403
@@ -41,17 +54,11 @@ def create_app(config_name=None):
         db.session.rollback()
         return render_template('errors/500.html'), 500
 
-    # Configure Logging
-    if not app.debug and not app.testing:
-        if not os.path.exists('logs'):
-            os.mkdir('logs')
-        file_handler = RotatingFileHandler('logs/nnpsms.log', maxBytes=10240, backupCount=10)
-        file_handler.setFormatter(logging.Formatter(
-            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-        ))
-        file_handler.setLevel(logging.INFO)
-        app.logger.addHandler(file_handler)
-        app.logger.setLevel(logging.INFO)
-        app.logger.info('NNPSMS Application Startup')
+    @app.errorhandler(Exception)
+    def handle_unhandled_exception(e):
+        """Catch-all for unexpected production errors to ensure graceful failure and DB rollback."""
+        db.session.rollback()
+        app.logger.error(f"Unhandled Exception: {str(e)}")
+        return render_template('errors/500.html'), 500
 
     return app
