@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Bulk CSV Student Import</h1>
+            <p class="text-sm text-gray-500">Upload a structured CSV file to register multiple students simultaneously.</p>
+        </div>
+        <a href="{{ url_for('students.list_students') }}" class="text-sm font-medium text-poly-800 hover:underline">
+            <i class="fas fa-arrow-left mr-1"></i> Back to Student List
+        </a>
+    </div>
+
+    <!-- Upload Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+        <form method="POST" enctype="multipart/form-data" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Select CSV File</label>
+                <input type="file" name="csv_file" accept=".csv" required class="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-poly-50 file:text-poly-800 hover:file:bg-poly-100 border border-gray-300 rounded-lg p-1">
+            </div>
+            <div class="flex items-center justify-between pt-2">
+                <a href="{{ url_for('students.download_sample_csv') }}" class="text-xs font-semibold text-blue-600 hover:underline">
+                    <i class="fas fa-download mr-1"></i> Download Sample CSV Template
+                </a>
+                <button type="submit" class="px-5 py-2 bg-poly-800 text-white text-sm font-semibold rounded-lg hover:bg-poly-900 transition shadow">
+                    <i class="fas fa-file-upload mr-2"></i> Upload & Process CSV
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Import Summary Section -->
+    {% if summary %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+        <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Import Processing Summary</h2>
+        <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+            <div class="p-4 bg-green-50 rounded-lg border border-green-100">
+                <div class="text-2xl font-bold text-green-700">{{ summary.success }}</div>
+                <div class="text-xs font-medium text-green-600">Successfully Imported</div>
+            </div>
+            <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-100">
+                <div class="text-2xl font-bold text-yellow-700">{{ summary.skipped }}</div>
+                <div class="text-xs font-medium text-yellow-600">Skipped (Duplicates)</div>
+            </div>
+            <div class="p-4 bg-red-50 rounded-lg border border-red-100">
+                <div class="text-2xl font-bold text-red-700">{{ summary.failed }}</div>
+                <div class="text-xs font-medium text-red-600">Failed Records</div>
+            </div>
+        </div>
+
+        {% if summary.errors %}
+        <h3 class="text-sm font-bold text-gray-700 mb-2">Error Details & Reasons:</h3>
+        <div class="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto border text-xs font-mono text-red-700 space-y-1">
+            {% for err in summary.errors %}
+            <div>Row {{ err.row }}: {{ err.reason }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Guidance Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-sm font-bold text-gray-800 mb-2">Required CSV Column Headers</h2>
+        <p class="text-xs text-gray-500 mb-4">Ensure your CSV file contains the following column headers in exact spelling:</p>
+        <div class="bg-gray-800 text-green-400 p-3 rounded-lg text-xs font-mono overflow-x-auto">
+            first_name, middle_name, last_name, email, phone_number, gender, date_of_birth, national_id, county, guardian_name, guardian_phone, emergency_contact, department_code, course_code, academic_year, semester_module
+        </div>
+    </div>
+</div>
+{% endblock %}
