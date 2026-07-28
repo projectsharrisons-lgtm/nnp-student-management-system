@@ -1,7 +1,12 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
 from app.extensions import db
-from app.utils import admin_required
+from app.utils import (
+    admin_required,
+    generate_student_profile_pdf,
+    generate_admission_letter_pdf,
+    generate_student_list_pdf
+)
 from app.models.student import Student
 from app.models.academic import Department, Course
 from app.blueprints.students.forms import StudentForm
