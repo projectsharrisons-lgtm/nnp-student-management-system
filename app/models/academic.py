@@ -1,95 +1,101 @@
+"""
+app/models/academic.py
+Contains academic structure models (Department, Course, Unit) 
+and academic profiles (StudentProfile, LecturerProfile).
+"""
+
 from app.extensions import db
-from datetime import datetime
+
 
 class Department(db.Model):
-    __tablename__ = 'departments'
-    
+    __tablename__ = 'department'
+
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), unique=True, nullable=False, index=True)
-    code = db.Column(db.String(20), unique=True, nullable=False, index=True)
-    description = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+    name = db.Column(db.String(150), nullable=False, unique=True)
+    code = db.Column(db.String(20), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime, default=db.func.now())
+
     # Relationships
-    courses = db.relationship('Course', backref='department', lazy='select', cascade='save-update, merge')
+    courses = db.relationship('Course', backref='department', lazy=True, cascade="all, delete-orphan")
+    units = db.relationship('Unit', backref='department', lazy=True, cascade="all, delete-orphan")
+    lecturers = db.relationship('LecturerProfile', backref='department', lazy=True)
 
     def __repr__(self):
-        return f"<Department {self.code}: {self.name}>"
+        return f"<Department {self.code}>"
+
 
 class Course(db.Model):
-    __tablename__ = 'courses'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), unique=True, nullable=False, index=True)
-    code = db.Column(db.String(30), unique=True, nullable=False, index=True)
-    level = db.Column(db.String(50), nullable=False)
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='RESTRICT'), nullable=False, index=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    units = db.relationship('Unit', backref='course', lazy='select', cascade='all, delete-orphan')
-    students = db.relationship('StudentProfile', backref='course', lazy='select', cascade='save-update, merge')
+    __tablename__ = 'course'
 
-    def __repr__(self):
-        return f"<Course {self.code}: {self.name}>"
-
-class Unit(db.Model):
-    __tablename__ = 'units'
-    
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
-    code = db.Column(db.String(30), unique=True, nullable=False, index=True)
-    course_id = db.Column(db.Integer, db.ForeignKey('courses.id', ondelete='CASCADE'), nullable=False, index=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    code = db.Column(db.String(50), nullable=False, unique=True)
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id', ondelete='RESTRICT'), nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.now())
+
+    # Relationships
+    units = db.relationship('Unit', backref='course', lazy=True, cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<Unit {self.code}: {self.name}>"
+        return f"<Course {self.code}>"
+
+
+class Unit(db.Model):
+    __tablename__ = 'unit'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    code = db.Column(db.String(50), nullable=False, unique=True)
+    credits = db.Column(db.Integer, default=3)
+    
+    # Foreign Keys
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id', ondelete='RESTRICT'), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id', ondelete='RESTRICT'), nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=db.func.now())
+
+    def __repr__(self):
+        return f"<Unit {self.code}>"
+
+
 class StudentProfile(db.Model):
-    __tablename__ = "student_profiles"
+    __tablename__ = 'student_profile'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
-    adm_number = db.Column(db.String(50), unique=True, nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey("courses.id"), nullable=False)
-    academic_year = db.Column(db.String(20), default="2026/2027")
-    module_term = db.Column(db.String(50), default="Module I")
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id', ondelete='CASCADE'), nullable=False, unique=True)
+    bio = db.Column(db.Text, nullable=True)
+    hobbies = db.Column(db.String(255), nullable=True)
+    extracurricular_activities = db.Column(db.Text, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=db.func.now())
+    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
 
-    user = db.relationship(
-        "User",
-        backref=db.backref("student_profile", uselist=False)
-    )
+    # Relationships
+    student = db.relationship('Student', backref=db.backref('profile', uselist=False, lazy=True))
 
     def __repr__(self):
-        return f"<StudentProfile {self.adm_number}>"
-        class LecturerProfile(db.Model):
-    __tablename__ = "lecturer_profiles"
+        return f"<StudentProfile for Student ID {self.student_id}>"
+
+
+class LecturerProfile(db.Model):
+    __tablename__ = 'lecturer_profile'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
-    staff_number = db.Column(db.String(50), unique=True, nullable=False)
-    department_id = db.Column(db.Integer, db.ForeignKey("departments.id"))
-    specialization = db.Column(db.String(150))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, unique=True)
+    employee_number = db.Column(db.String(50), nullable=False, unique=True)
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id', ondelete='RESTRICT'), nullable=True)
+    
+    title = db.Column(db.String(20), nullable=True)
+    qualifications = db.Column(db.Text, nullable=True)
+    bio = db.Column(db.Text, nullable=True)
+    date_joined = db.Column(db.Date, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    
+    created_at = db.Column(db.DateTime, default=db.func.now())
+    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
 
-    department = db.relationship(
-        "Department",
-        backref=db.backref("lecturers", lazy=True)
-    )
-
-    user = db.relationship(
-    class LecturerProfile(db.Model):
-    __tablename__ = "lecturer_profiles"
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    staff_number = db.Column(db.String(50), unique=True, nullable=False)
-    department_id = db.Column(db.Integer, db.ForeignKey("departments.id"))
-    specialization = db.Column(db.String(150))
+    # Relationships
+    user = db.relationship('User', backref=db.backref('lecturer_profile', uselist=False, lazy=True))
 
     def __repr__(self):
-        return f"<LecturerProfile {self.staff_number}>"    
-        "User",
-        backref=db.backref("lecturer_profile", uselist=False)
-    )
-
-    def __repr__(self):
-        return f"<LecturerProfile {self.staff_number}>"
+        return f"<LecturerProfile {self.employee_number}>"
