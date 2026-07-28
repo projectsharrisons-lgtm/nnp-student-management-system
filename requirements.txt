@@ -1,14 +1,27 @@
-Flask==3.0.3
-Flask-SQLAlchemy==3.1.1
-Flask-Migrate==4.0.7
-Flask-Login==0.6.3
-Flask-WTF==1.2.1
-Flask-Mail==0.10.0
-Flask-Limiter==3.8.0
-email-validator==2.1.1
-psycopg2-binary==2.9.9
-gunicorn==22.0.0
-python-dotenv==1.0.1
-Werkzeug==3.0.3
-WTForms==3.1.2
-reportlab==4.2.2
+# Web Framework
+Flask>=3.0.2
+Werkzeug>=3.0.1
+gunicorn>=21.2.0
+python-dotenv>=1.0.1
+
+# Database
+SQLAlchemy>=2.0.27
+Flask-SQLAlchemy>=3.1.1
+Flask-Migrate>=4.0.5
+psycopg2-binary>=2.9.9
+
+# Authentication & Forms
+Flask-Login>=0.6.3
+Flask-WTF>=1.2.1
+WTForms>=3.1.2
+email-validator>=2.1.1
+
+# Email
+Flask-Mail>=0.10.0
+
+# Rate Limiting
+Flask-Limiter>=3.8.0
+
+# PDF & Images
+reportlab>=4.1.0
+Pillow>=10.2.0
