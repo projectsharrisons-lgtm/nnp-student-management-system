@@ -8,7 +8,15 @@ from app.extensions import db, migrate, login_manager, csrf, mail, limiter
 from app.extensions import db
 from app.models.user import User
 from app.models.academic import Department, Course, Unit, StudentProfile, LecturerProfile
-
+from app.blueprints.main.routes import main_bp
+    from app.blueprints.auth.routes import auth_bp
+    from app.blueprints.admin.routes import admin_bp
+    from app.blueprints.students.routes import students_bp
+    
+    app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(students_bp)
 def seed_database():
     print("🌱 Starting Nyeri National Polytechnic Seed Process...")
 
